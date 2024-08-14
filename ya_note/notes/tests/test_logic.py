@@ -38,25 +38,25 @@ class TestNoteCreation(BaseTestClass):
         """Метод проверяет, что анонимный пользователь
         не может создать заметку.
         """
+        notes_count = Note.objects.count()
         response = self.client.post(self.NOTE_ADD_URL, data=self.form_data)
         login_url = reverse('users:login')
         redirect_url = f'{login_url}?next={self.NOTE_ADD_URL}'
         self.assertRedirects(response, redirect_url)
-        note_count = Note.objects.count()
-        self.assertEqual(note_count, 0)
+        self.assertEqual(notes_count, Note.objects.count())
 
     def test_user_can_create_note(self):
         """Метод проверяет, что залогиненный пользователь
         может создать заметку.
         """
+        notes_count = Note.objects.count()
         response = self.auth_client.post(
             self.NOTE_ADD_URL,
             data=self.form_data
         )
         self.assertRedirects(response, self.REDIRECT_URL)
-        note_count = Note.objects.count()
-        self.assertEqual(note_count, 1)
-        note = Note.objects.get()
+        self.assertEqual(Note.objects.count(), notes_count + 1)
+        note = Note.objects.order_by('pk').last()
         self.assertEqual(note.title, self.NOTE_TITLE)
         self.assertEqual(note.text, self.NOTE_TEXT)
         self.assertEqual(note.author, self.author)
@@ -74,6 +74,7 @@ class TestSlug(BaseTestClass):
             slug='note-slug',
             author=self.author
         )
+        notes_count = Note.objects.count()
         self.form_data['slug'] = note.slug
         response = self.auth_client.post(
             self.NOTE_ADD_URL, data=self.form_data
@@ -82,21 +83,20 @@ class TestSlug(BaseTestClass):
             response, 'form', 'slug',
             errors=(note.slug + WARNING)
         )
-        notes_count = Note.objects.count()
-        self.assertEqual(notes_count, 1)
+        self.assertEqual(Note.objects.count(), notes_count)
 
     def test_empty_slug(self):
         """Метод проверяет, если при создании заметки
         не заполнен slug, то он формируется автоматически.
         """
+        notes_count = Note.objects.count()
         self.form_data.pop('slug')
         response = self.auth_client.post(
             self.NOTE_ADD_URL, data=self.form_data
         )
         self.assertRedirects(response, self.REDIRECT_URL)
-        notes_count = Note.objects.count()
-        self.assertEqual(notes_count, 1)
-        new_note = Note.objects.get()
+        self.assertEqual(Note.objects.count(), notes_count + 1)
+        new_note = Note.objects.order_by('pk').last()
         expected_slug = slugify(self.form_data['title'])
         self.assertEqual(new_note.slug, expected_slug)
 
@@ -122,19 +122,19 @@ class TestNoteEditDelete(BaseTestClass):
         """Метод проверяет, что авторизованный пользователь может
         удалять свои заметки.
         """
+        notes_count = Note.objects.count()
         response = self.auth_client.delete(self.delete_url)
         self.assertRedirects(response, self.REDIRECT_URL)
-        note_count = Note.objects.count()
-        self.assertEqual(note_count, 0)
+        self.assertEqual(Note.objects.count(), notes_count - 1)
 
     def test_other_user_cant_delete_note(self):
         """Метод проверяет, что авторизованный пользователь
         не может удалять чужие заметки.
         """
+        notes_count = Note.objects.count()
         response = self.reader_client.delete(self.delete_url)
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
-        note_count = Note.objects.count()
-        self.assertEqual(note_count, 1)
+        self.assertEqual(Note.objects.count(), notes_count)
 
     def test_other_user_cant_edit_note(self):
         """Метод проверяет, что авторизованный пользователь
