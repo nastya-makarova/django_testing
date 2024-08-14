@@ -21,7 +21,17 @@ class TestRoutes(TestCase):
             text='Текст заметки',
             author=cls.author
         )
-        cls.slug_for_args = (cls.notes.slug,)
+        cls.urls_without_args = (
+            ('notes:add', None),
+            ('notes:list', None),
+            ('notes:success', None)
+        )
+        cls.urls_with_args = (
+            ('notes:detail', (cls.notes.slug,)),
+            ('notes:edit', (cls.notes.slug,)),
+            ('notes:delete', (cls.notes.slug,)),
+        )
+        cls.urls = cls.urls_with_args + cls.urls_without_args
 
     def test_pages_availability_for_anonymous_user(self):
         """Метод тестирует доступность для анонимных пользователей
@@ -46,16 +56,10 @@ class TestRoutes(TestCase):
         страницы успешного добавления заметки, страницы списка заметок,
         страницы создания заметки.
         """
-        # Логиним пользователя в клиенте:
         self.client.force_login(self.author)
-
-        # Создаём набор тестовых данных - кортеж кортежей.
-        # Каждый вложенный кортеж содержит два элемента:
-        # имя пути и позиционные аргументы для функции reverse().
-        urls = ('notes:add', 'notes:list', 'notes:success')
-        for name in urls:
+        for name, args in self.urls_without_args:
             with self.subTest(name=name):
-                url = reverse(name)
+                url = reverse(name, args=args)
                 response = self.client.get(url)
                 self.assertEqual(response.status_code, HTTPStatus.OK)
 
@@ -71,9 +75,9 @@ class TestRoutes(TestCase):
 
         for user, status in users_statuses:
             self.client.force_login(user)
-            for name in ('notes:edit', 'notes:delete', 'notes:detail'):
+            for name, args in self.urls_with_args:
                 with self.subTest(name=name, user=user):
-                    url = reverse(name, args=self.slug_for_args)
+                    url = reverse(name, args=args)
                     response = self.client.get(url)
                     self.assertEqual(response.status_code, status)
 
@@ -83,16 +87,8 @@ class TestRoutes(TestCase):
         отдельной заметки, редактирования или удаления заметки анонимный
         пользователь перенаправляется на страницу логина.
         """
-        urls = (
-            ('notes:detail', self.slug_for_args),
-            ('notes:edit', self.slug_for_args),
-            ('notes:delete', self.slug_for_args),
-            ('notes:add', None),
-            ('notes:list', None),
-            ('notes:success', None)
-        )
         login_url = reverse('users:login')
-        for name, args in urls:
+        for name, args in self.urls:
             with self.subTest(name=name):
                 url = reverse(name, args=args)
                 expected_url = f'{login_url}?next={url}'
