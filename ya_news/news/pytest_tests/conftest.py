@@ -4,7 +4,6 @@ import pytest
 
 from django.conf import settings
 from django.test.client import Client
-from django.urls import reverse
 from django.utils import timezone
 
 from news.models import Comment, News
@@ -73,7 +72,6 @@ def all_news():
         )
         for index in range(settings.NEWS_COUNT_ON_HOME_PAGE + 1)
     ]
-    News.objects.bulk_create(all_news)
     return News.objects.bulk_create(all_news)
 
 

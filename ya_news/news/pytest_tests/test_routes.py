@@ -17,7 +17,7 @@ from django.urls import reverse
         ('users:signup', None),
     )
 )
-def test_pages_availability_for_anonymous_user(client, name, args,  news):
+def test_pages_availability_for_anonymous_user(client, name, args, news):
     """Метод проверяет, что доступность анонимному пользователю главной
     страницы, страницы отдельной нововсти, cтраниц регистрации пользователей,
     входа в учётную запись и выхода).
@@ -25,7 +25,7 @@ def test_pages_availability_for_anonymous_user(client, name, args,  news):
     if args is not None:
         url = reverse(name, args=(news.id,))
     else:
-        url = reverse(name, args=args)
+        url = reverse(name)
 
     response = client.get(url)
     assert response.status_code == HTTPStatus.OK
