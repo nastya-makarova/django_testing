@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 import pytest
 
@@ -11,7 +11,6 @@ from news.models import Comment, News
 
 
 COMMENT_COUNT = 10
-COMMENT_TEXT = 'Текст комментария'
 
 
 @pytest.fixture
@@ -47,45 +46,25 @@ def not_author_client(not_author):
 @pytest.fixture
 def news():
     """Фикстура возвращает объект новости."""
-    news = News.objects.create(
+    return News.objects.create(
         title='Заголовок', text='Текст'
     )
-    return news
 
 
 @pytest.fixture
 def comment(news, author):
     """Фикстура возвращает объект комментария."""
-    comment = Comment.objects.create(
+    return Comment.objects.create(
         news=news,
         author=author,
         text='Текст'
     )
-    return comment
-
-
-@pytest.fixture
-def news_id_for_args(news):
-    """Фикстура возвращает id новости."""
-    return (news.id,)
-
-
-@pytest.fixture
-def get_news_detail_page(news):
-    """Фикстура возвращает страницу новости."""
-    return reverse('news:detail', args=(news.id,))
-
-
-@pytest.fixture
-def comment_id_for_args(comment):
-    """Фикстура возвращает id комментария."""
-    return (comment.id,)
 
 
 @pytest.fixture
 def all_news():
     """Фикстура возвращает объекты новостей для главной страницы."""
-    today = datetime.today()
+    today = timezone.now()
     all_news = [
         News(
             title=f'Новость {index}',
@@ -108,15 +87,3 @@ def all_comments(news, author):
         )
         comment.created = now + timedelta(days=index)
         comment.save()
-
-
-@pytest.fixture
-def form_data():
-    """Фикстура возвращает словарь модели Comment"""
-    return {'text': COMMENT_TEXT}
-
-
-@pytest.fixture
-def get_url_to_comments(get_news_detail_page):
-    """Фикстура возвращает адрес блока с комментариями."""
-    return get_news_detail_page + '#comments'
