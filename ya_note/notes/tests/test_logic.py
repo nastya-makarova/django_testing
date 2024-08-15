@@ -8,7 +8,6 @@ from pytils.translit import slugify
 from notes.forms import WARNING
 from notes.models import Note
 
-
 User = get_user_model()
 
 
